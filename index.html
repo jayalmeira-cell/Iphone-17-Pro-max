@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ultra iPhone Simulator</title>
+<style>
+body { margin:0; font-family:sans-serif; background:#222; display:flex; justify-content:center; align-items:center; height:100vh; }
+#iphone { width:390px; height:780px; border-radius:55px; background:#111; overflow:hidden; position:relative; touch-action: none; }
+.status-bar { position:absolute; top:10px; left:20px; right:20px; display:flex; justify-content:space-between; color:white; font-weight:bold; }
+.lock-screen, .home-grid, .multitask, .notif-center, .control-center { position:absolute; width:100%; height:100%; top:0; left:0; border-radius:25px; transition:all 0.25s ease; overflow:hidden; }
+.lock-screen { background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:1000; }
+.lock-screen input { font-size:18px; text-align:center; margin-top:10px; padding:5px; }
+.lock-screen button { font-size:18px; padding:8px 12px; margin-top:10px; }
+.home-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; padding:16px; display:none; }
+.app-icon { text-align:center; cursor:pointer; user-select:none; }
+.app-icon div { width:60px; height:60px; border-radius:18px; background:rgba(255,255,255,0.15); display:flex; justify-content:center; align-items:center; font-size:22px; margin:auto; margin-bottom:5px; will-change:transform; }
+@keyframes wiggle {0%{transform:rotate(-2deg);}100%{transform:rotate(2deg);}}
+.dynamic-island { position:absolute; top:0; left:50%; transform:translateX(-50%); width:150px; height:30px; background:#222; color:white; border-radius:20px; display:flex; justify-content:center; align-items:center; z-index:2000; transition:all 0.2s ease;}
+.notif-center { top:-400px; background:#222; border-bottom-left-radius:25px; border-bottom-right-radius:25px; color:white; padding:15px; z-index:2000; overflow-y:auto; height:400px; }
+.control-center { bottom:-400px; background:#222; border-top-left-radius:25px; border-top-right-radius:25px; color:white; padding:20px; z-index:2000; height:400px; }
+.control-center input[type=range] { width:100%; }
+.multitask { top:60px; left:0; width:100%; height:calc(100% - 60px); background:rgba(0,0,0,0.85); z-index:3000; display:flex; flex-wrap:wrap; gap:10px; padding:10px; display:none; }
+.multitask div { flex:0 0 48%; height:150px; background:#333; border-radius:15px; display:flex; justify-content:center; align-items:center; color:white; }
+</style>
+</head>
+<body>
+
+<div id="iphone">
+  <div class="status-bar"><span id="time">12:00</span><span id="battery">🔋100%</span></div>
+
+  <!-- Lock Screen -->
+  <div class="lock-screen" id="lockScreen">
+    <h1>🔒 Locked</h1>
+    <button onclick="unlockFaceID()">Face ID</button>
+    <input type="password" placeholder="1234" id="passcodeInput">
+    <button onclick="unlockPasscode()">Unlock</button>
+  </div>
+
+  <!-- Home Screen -->
+  <div class="home-grid" id="homeScreen"></div>
+
+  <!-- Dynamic Island -->
+  <div class="dynamic-island" id="dynamicIsland">Idle</div>
+
+  <!-- Notification Center -->
+  <div class="notif-center" id="notifCenter">
+    <h3 style="text-align:center;">Notifications</h3>
+    <div id="notifList"></div>
+  </div>
+
+  <!-- Control Center -->
+  <div class="control-center" id="controlCenter">
+    <h3 style="text-align:center; margin-bottom:20px;">Control Center</h3>
+    <div style="display:flex; justify-content:space-around;">
+      <div style="text-align:center;">📶<br/>Wi-Fi</div>
+      <div style="text-align:center;">🔵<br/>Bluetooth</div>
+      <div style="text-align:center;">✈️<br/>Airplane</div>
+      <div style="text-align:center;">🌙<br/>DND</div>
+    </div>
+    <div style="margin-top:20px;"><label>Brightness</label><input type="range" min="0" max="100"></div>
+    <div style="margin-top:10px;"><label>Volume</label><input type="range" min="0" max="100"></div>
+  </div>
+
+  <!-- Multitask -->
+  <div class="multitask" id="multitask">
+    <button onclick="closeMultitask()" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">Close Multitask</button>
+  </div>
+</div>
+
+<script>
+const apps = [
+  {name:"Phone", icon:"📞"}, {name:"Messages", icon:"💬"}, {name:"Safari", icon:"🌐"},
+  {name:"Music", icon:"🎵"}, {name:"Notes", icon:"📝"}, {name:"Calculator", icon:"🧮"},
+  {name:"Clock", icon:"⏰"}, {name:"Camera", icon:"📸"}
+];
+
+const homeScreen = document.getElementById('homeScreen');
+const lockScreen = document.getElementById('lockScreen');
+const notifCenter = document.getElementById('notifCenter');
+const controlCenter = document.getElementById('controlCenter');
+const dynamicIsland = document.getElementById('dynamicIsland');
+const notifList = document.getElementById('notifList');
+const multitask = document.getElementById('multitask');
+const timeEl = document.getElementById('time');
+const batteryEl = document.getElementById('battery');
+const passcodeInput = document.getElementById('passcodeInput');
+
+let notifications = [];
+let battery = 100;
+let touchStartY = 0;
+
+// Render apps
+apps.forEach((app,i)=>{
+  const div = document.createElement('div');
+  div.className = 'app-icon';
+  div.innerHTML = `<div>${app.icon}</div>${app.name}`;
+  div.onclick = ()=>pushNotification(app.name+" opened");
+  homeScreen.appendChild(div);
+});
+
+// Update time
+setInterval(()=>{
+  timeEl.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+},1000);
+
+// Battery drain
+setInterval(()=>{
+  battery = battery>0?battery-1:100;
+  batteryEl.textContent="🔋"+battery+"%"
+},30000);
+
+// Notifications
+function pushNotification(text){
+  notifications.push(text);
+  if(notifications.length>5) notifications.shift();
+  notifList.innerHTML = notifications.map(n=>`<div style="margin:5px;padding:10px;background:#333;border-radius:10px;">${n}</div>`).join('');
+  dynamicIsland.textContent = text;
+}
+
+// Unlock functions
+function unlockFaceID(){
+  lockScreen.style.transition="opacity 0.8s";
+  lockScreen.style.opacity=0;
+  setTimeout(()=>{
+    lockScreen.style.display='none';
+    homeScreen.style.display='grid';
+  },800);
+}
+
+function unlockPasscode(){
+  if(passcodeInput.value === '1234'){
+    unlockFaceID();
+  } else {
+    alert('Wrong passcode!');
+  }
+}
+
+// Touch gestures
+const iphone = document.getElementById('iphone');
+iphone.addEventListener('touchstart', e=>touchStartY=e.touches[0].clientY);
+iphone.addEventListener('touchend', e=>{
+  const delta = touchStartY - e.changedTouches[0].clientY;
+  if(delta<-50) notifCenter.style.top='0px';
+  if(delta>50) notifCenter.style.top='-400px';
+  if(delta>50 && touchStartY>600) controlCenter.style.bottom='0px';
+  if(delta<-50) controlCenter.style.bottom='-400px';
+});
+
+// Multitask
+function openMultitask(){
+  multitask.style.display='flex';
+}
+function closeMultitask(){
+  multitask.style.display='none';
+}
+</script>
+</body>
+</html>
