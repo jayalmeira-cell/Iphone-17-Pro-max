@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Veronica 💖</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffeef0;
+  --pink:#ff6699;
+  --purple:#8a2be2;
+  --white:#fff;
+  --black:#111;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+body{
+  background:linear-gradient(to bottom, #ffeef0, #ffccf0);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+}
+
+.container{
+  background:rgba(255,255,255,0.95);
+  padding:30px 20px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.2);
+  width:90%;
+  max-width:400px;
+  text-align:center;
+}
+
+h1{
+  color:var(--pink);
+  font-size:2rem;
+  margin-bottom:20px;
+}
+
+.question{
+  font-size:1.2rem;
+  margin:20px 0;
+}
+
+.buttons{
+  display:flex;
+  justify-content:space-around;
+  margin-top:20px;
+}
+
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s;
+  font-size:1rem;
+}
+
+button.yes{
+  background:var(--pink);
+  color:var(--white);
+}
+
+button.no{
+  background:var(--purple);
+  color:var(--white);
+}
+
+button.yes:hover{
+  transform:translateY(-3px);
+}
+
+button.no:hover{
+  transform:translateY(-3px);
+}
+
+#emoji{
+  font-size:2rem;
+  margin-top:15px;
+  display:none;
+}
+
+/* responsive */
+@media(max-width:500px){
+  .container{padding:20px;}
+  h1{font-size:1.8rem;}
+  .question{font-size:1rem;}
+  button{padding:8px 15px;font-size:0.9rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>💖 For Veronica 💖</h1>
+  <div id="question-container">
+    <div class="question" id="question">Will you be my Valentine? 😘</div>
+    <div class="buttons">
+      <button class="yes" onclick="answerYes()">Yes</button>
+      <button class="no" onclick="answerNo()">No</button>
+    </div>
+    <div id="emoji">😢</div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  "Will you be my Valentine? 😘",
+  "Do you love our moments together? 💕",
+  "Will you go on a date with me? 🌹",
+  "Will you marry me, sweetie? 💍"
+];
+
+let current = 0;
+
+function answerYes(){
+  current++;
+  document.getElementById('emoji').style.display = 'none';
+  if(current < questions.length){
+    document.getElementById('question').innerText = questions[current];
+  } else {
+    document.getElementById('question-container').innerHTML = "<h2>Yay! 💖 I'm so happy! 😍</h2>";
+  }
+}
+
+function answerNo(){
+  // show sad emoji briefly then hide
+  const emoji = document.getElementById('emoji');
+  emoji.innerText = Math.random()>0.5?'😠':'😢';
+  emoji.style.display = 'block';
+  // animate disappear of the No button
+  const noBtn = document.querySelector('button.no');
+  noBtn.style.display='none';
+}
+</script>
+
+</body>
+</html>
